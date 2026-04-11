@@ -1,0 +1,64 @@
+// Swap to Postgres later: change provider to "postgresql" and update DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  passwordHash     String
+  studioName       String   @default("My Studio")
+  bookingSlug      String   @unique
+  depositCents     Int      @default(5000)
+  plan             String   @default("free")
+  stripeCustomerId String?
+  createdAt        DateTime @default(now())
+
+  bookings Booking[]
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id
+  userId    Int
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Booking {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  // client info
+  clientName      String
+  clientEmail     String
+  clientPhone     String?
+  // appointment
+  description     String
+  preferredDate   DateTime
+  durationMinutes Int       @default(120)
+  // workflow state
+  status          String    @default("pending") // pending | deposit_paid | consented | completed | cancelled
+  depositCents    Int
+  depositPaidAt   DateTime?
+  consentSignedAt DateTime?
+  consentName     String?
+  // aftercare
+  appointmentDate DateTime?
+  aftercareDay3At DateTime?
+  aftercareDay14At DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
