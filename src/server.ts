@@ -434,6 +434,17 @@ app.post('/bookings/:id/complete', async (c) => {
   return c.redirect(`/bookings/${booking.id}`);
 });
 
+app.post('/bookings/:id/cancel', async (c) => {
+  const user = c.get('user')!;
+  const booking = await prisma.booking.findUnique({ where: { id: Number(c.req.param('id')) } });
+  if (!booking || booking.userId !== user.id) return c.notFound();
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: 'cancelled' },
+  });
+  return c.redirect(`/bookings/${booking.id}`);
+});
+
 // ---------- start ----------
 
 const port = Number(process.env.PORT ?? 3002);
