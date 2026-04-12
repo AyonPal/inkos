@@ -6,21 +6,28 @@ Stop running your studio out of Instagram DMs.
 ## Stack
 
 - **Hono** for HTTP, server-rendered HTML
-- **Prisma + SQLite** (swap to Postgres later by editing `prisma/schema.prisma`)
+- **Cloudflare Workers + D1** for compute and data storage
 - **Stripe Checkout** for deposits (demo mode if no key set)
-- **Built-in scheduler** for aftercare reminders (every 60s sweep)
+- **Cron Trigger** for aftercare reminders (runs every minute via `wrangler.toml`)
 - **Vitest** for tests
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env
-npx prisma migrate dev --name init
-npm run dev
+
+# Create D1 database (once)
+wrangler d1 create tattoo-studio
+# Paste the returned database_id into wrangler.toml
+
+# Apply migrations
+wrangler d1 migrations apply tattoo-studio --local
+
+# Run locally
+wrangler dev
 ```
 
-Open <http://localhost:3002>, sign up, copy your booking link.
+Open <http://localhost:8787>, sign up, copy your booking link.
 
 ## Features
 
@@ -28,7 +35,7 @@ Open <http://localhost:3002>, sign up, copy your booking link.
 - Booking → deposit checkout → consent form → appointment → aftercare flow
 - Stripe deposits in `payment` mode (demo mode auto-confirms when no Stripe key set)
 - Digital consent form with typed signature
-- Automated 3-day and 14-day aftercare reminders (sweeps every minute)
+- Automated 3-day and 14-day aftercare reminders via Cron Trigger (every minute sweep)
 - Plug in any notification provider via `setAftercareDelivery()` (Resend, Postmark, Twilio, etc.)
 - Settings: studio name, default deposit, booking slug
 
@@ -39,23 +46,24 @@ Open <http://localhost:3002>, sign up, copy your booking link.
 3. After deposit, redirected to consent form → types name to sign
 4. Artist sees booking in `/dashboard`, schedules appointment date
 5. Artist marks "completed" after the session
-6. Aftercare sweep runs every 60s, sends 3-day reminder, then 14-day reminder
+6. Cron Trigger fires every minute, sends 3-day reminder, then 14-day reminder
 
 ## Project layout
 
 ```
 src/
-  server.ts      # Hono app, all routes
-  db.ts          # Prisma client
-  auth.ts        # session auth
-  billing.ts     # Stripe deposit checkout
-  aftercare.ts   # scheduled aftercare sweep + injection point for delivery
-  views.ts       # safe HTML helper
-prisma/
-  schema.prisma
+  index.ts      # Hono app, all routes + cron handler
+  db.ts         # D1 queries
+  auth.ts       # session auth
+  billing.ts    # Stripe deposit checkout
+  aftercare.ts  # scheduled aftercare sweep + injection point for delivery
+  views.ts      # safe HTML helper
+migrations/
+  0001_init.sql
 tests/
   auth.test.ts
-  aftercare.test.ts  # spawns isolated sqlite, exercises full sweep logic
+  aftercare.test.ts  # exercises full sweep logic with isolated D1
+wrangler.toml
 ```
 
 ## Wiring real notifications
@@ -83,11 +91,21 @@ setAftercareDelivery(async (msg) => {
 npm test
 ```
 
-The aftercare tests spawn an isolated SQLite database per test run, exercise the full sweep logic, and verify idempotency.
+The aftercare tests use an isolated D1 database per test run, exercise the full sweep logic, and verify idempotency.
 
-## Production
+## Deploy
 
 ```bash
-docker build -t tattoo-studio-os .
-docker run -p 3002:3002 --env-file .env tattoo-studio-os
+wrangler d1 create tattoo-studio
+wrangler d1 migrations apply tattoo-studio
+wrangler deploy
 ```
+
+For production, set via `wrangler secret put`:
+- `SESSION_SECRET`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+And set in `wrangler.toml` `[vars]`:
+- `APP_URL=https://your-worker.workers.dev`
+- `DEFAULT_DEPOSIT_CENTS=5000`
