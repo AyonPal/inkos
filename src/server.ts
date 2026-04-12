@@ -14,12 +14,17 @@ import {
   clearSessionCookie,
   type AppEnv,
 } from './auth.ts';
-import { createDepositCheckout, stripeEnabled } from './billing.ts';
+import { createDepositCheckout, stripeEnabled, verifyWebhookEvent } from './billing.ts';
 import { layout, html, esc, raw } from './views.ts';
 import { startAftercareScheduler } from './aftercare.ts';
 import { getCookie } from 'hono/cookie';
+import { csrf } from 'hono/csrf';
 
 const app = new Hono<AppEnv>();
+app.use('*', async (c, next) => {
+  if (c.req.path === '/webhooks/stripe') return next();
+  return csrf()(c, next);
+});
 app.use('*', authMiddleware);
 
 const APP_URL = process.env.APP_URL ?? `http://localhost:${process.env.PORT ?? 3002}`;
@@ -221,6 +226,7 @@ app.get('/book/:slug', async (c) => {
           <label>Tattoo idea<textarea name="description" required minlength="10" placeholder="Describe size, placement, style, references..."></textarea></label>
           <label>Preferred date<input name="preferredDate" type="date" required></label>
           <label>Estimated session length (minutes)<input name="durationMinutes" type="number" min="30" max="600" step="15" value="120" required></label>
+          <p class="muted" style="font-size:12px">By booking, you agree that this deposit is non-refundable within 48 hours of your appointment. Cancellations with 48+ hours notice receive a full refund.</p>
           <button type="submit">Continue to deposit →</button>
         </form>
       `,
@@ -251,6 +257,8 @@ app.post('/book/:slug', async (c) => {
   });
   if (!parsed.success) return c.text('Invalid input: ' + parsed.error.message, 400);
 
+  const clientIp = c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? 'unknown';
+
   const booking = await prisma.booking.create({
     data: {
       userId: artist.id,
@@ -261,6 +269,7 @@ app.post('/book/:slug', async (c) => {
       preferredDate: new Date(parsed.data.preferredDate),
       durationMinutes: parsed.data.durationMinutes,
       depositCents: artist.depositCents,
+      clientIp,
     },
   });
 
@@ -344,12 +353,14 @@ app.post('/book/:slug/consent/:id', async (c) => {
   const form = await c.req.formData();
   const consentName = String(form.get('consentName') ?? '').trim();
   if (consentName.length < 2) return c.text('Please type your full name', 400);
+  const consentIp = c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? 'unknown';
   await prisma.booking.update({
     where: { id: booking.id },
     data: {
       status: 'consented',
       consentSignedAt: new Date(),
       consentName,
+      notes: [booking.notes, `consent-ip: ${consentIp}`].filter(Boolean).join('\n'),
     },
   });
   return c.html(layout({ title: 'Signed', user: null, body: html`<h1>Thanks, ${consentName} ✓</h1><p class="muted">Consent recorded. See you on appointment day.</p>` }));
@@ -445,6 +456,33 @@ app.post('/bookings/:id/cancel', async (c) => {
   return c.redirect(`/bookings/${booking.id}`);
 });
 
+// ---------- stripe webhook ----------
+
+app.post('/webhooks/stripe', async (c) => {
+  const body = await c.req.text();
+  const sig = c.req.header('stripe-signature') ?? '';
+  const event = await verifyWebhookEvent(body, sig);
+  if (!event) return c.text('Invalid signature', 400);
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as { metadata?: { booking_id?: string } };
+    const bookingId = Number(session.metadata?.booking_id);
+    if (bookingId) {
+      await prisma.booking.updateMany({
+        where: { id: bookingId, status: 'pending' },
+        data: { status: 'deposit_paid', depositPaidAt: new Date() },
+      });
+    }
+  }
+  return c.text('ok');
+});
+
+// ---------- session cleanup ----------
+
+async function cleanExpiredSessions() {
+  const result = await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+  if (result.count > 0) console.log(`[cleanup] deleted ${result.count} expired sessions`);
+}
+
 // ---------- start ----------
 
 const port = Number(process.env.PORT ?? 3002);
@@ -454,6 +492,7 @@ serve({ fetch: app.fetch, port }, (info) => {
   // eslint-disable-next-line no-console
   console.log(`Stripe: ${stripeEnabled ? 'live keys' : 'demo mode (no key set)'}`);
   startAftercareScheduler();
+  setInterval(cleanExpiredSessions, 60 * 60 * 1000); cleanExpiredSessions();
 });
 
 export default app;

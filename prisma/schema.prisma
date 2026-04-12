@@ -54,6 +54,7 @@ model Booking {
   appointmentDate DateTime?
   aftercareDay3At DateTime?
   aftercareDay14At DateTime?
+  clientIp        String?
   notes           String?
   createdAt       DateTime  @default(now())
 

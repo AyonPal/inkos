@@ -40,3 +40,10 @@ export async function createDepositCheckout(opts: {
   });
   return { url: session.url ?? opts.cancelUrl, demo: false };
 }
+
+export async function verifyWebhookEvent(body: string, signature: string): Promise<Stripe.Event | null> {
+  if (!stripeEnabled || !stripe) return null;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) return null;
+  try { return stripe.webhooks.constructEvent(body, signature, secret); } catch { return null; }
+}
