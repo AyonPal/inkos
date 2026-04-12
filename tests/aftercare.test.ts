@@ -1,136 +1,148 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdir, rm } from 'node:fs/promises';
-import { execSync } from 'node:child_process';
+import { describe, expect, it, beforeEach } from 'vitest';
+import { runAftercareSweep, setAftercareDelivery } from '../src/aftercare.ts';
 
-// Use a unique sqlite db per test run so we don't pollute the dev db.
-const TEST_DB = `./data/test-${process.pid}.db`;
-process.env.DATABASE_URL = `file:${TEST_DB}`;
-process.env.NODE_ENV = 'test';
+/**
+ * Minimal D1Database stub for testing the aftercare sweep logic.
+ * Only implements the subset of the D1 API used by runAftercareSweep.
+ */
+function createTestDb(bookings: any[]) {
+  // In-memory store keyed by id
+  const store = new Map(bookings.map((b) => [b.id, { ...b }]));
 
-const { prisma } = await import('../src/db.ts');
-const { runAftercareSweep, setAftercareDelivery } = await import('../src/aftercare.ts');
+  const db = {
+    prepare(sql: string) {
+      return {
+        _sql: sql,
+        _binds: [] as any[],
+        bind(...args: any[]) {
+          this._binds = args;
+          return this;
+        },
+        async all<T>(): Promise<{ results: T[] }> {
+          // Match SELECT queries for day3 or day14
+          const isDay3 = this._sql.includes('aftercare_day3_at IS NULL');
+          const isDay14 = this._sql.includes('aftercare_day14_at IS NULL') && !isDay3;
+          const cutoff = this._binds[0] as string;
+          const results: any[] = [];
+          for (const b of store.values()) {
+            if (!['completed', 'consented'].includes(b.status)) continue;
+            if (!b.appointment_date) continue;
+            if (b.appointment_date > cutoff) continue;
+            if (isDay3 && b.aftercare_day3_at === null) results.push(b);
+            if (isDay14 && b.aftercare_day14_at === null) results.push(b);
+          }
+          return { results: results as T[] };
+        },
+        async run() {
+          // Match UPDATE queries
+          if (this._sql.includes('aftercare_day3_at')) {
+            const id = this._binds[1];
+            const b = store.get(id);
+            if (b) b.aftercare_day3_at = this._binds[0];
+          }
+          if (this._sql.includes('aftercare_day14_at')) {
+            const id = this._binds[1];
+            const b = store.get(id);
+            if (b) b.aftercare_day14_at = this._binds[0];
+          }
+        },
+      };
+    },
+  } as unknown as D1Database;
 
-beforeEach(async () => {
-  await mkdir('./data', { recursive: true });
-  // Apply schema directly (faster than running migrate dev for tests).
-  execSync('npx prisma db push --skip-generate --accept-data-loss', {
-    env: { ...process.env, DATABASE_URL: `file:${TEST_DB}` },
-    stdio: 'pipe',
-  });
-});
-
-afterEach(async () => {
-  await prisma.$disconnect();
-  await rm(TEST_DB, { force: true });
-  await rm(`${TEST_DB}-journal`, { force: true });
-});
+  return { db, store };
+}
 
 const DAY = 24 * 60 * 60 * 1000;
 
 describe('aftercare sweep', () => {
   it('sends day-3 reminder for completed bookings older than 3 days', async () => {
-    const user = await prisma.user.create({
-      data: { email: 'a@b.c', passwordHash: 'x:y', bookingSlug: `t-${Date.now()}` },
-    });
-    const fourDaysAgo = new Date(Date.now() - 4 * DAY);
-    await prisma.booking.create({
-      data: {
-        userId: user.id,
-        clientName: 'Bob',
-        clientEmail: 'bob@example.com',
-        description: 'small flash on forearm',
-        preferredDate: fourDaysAgo,
-        appointmentDate: fourDaysAgo,
-        depositCents: 5000,
+    const fourDaysAgo = new Date(Date.now() - 4 * DAY).toISOString();
+    const { db } = createTestDb([
+      {
+        id: 1,
+        client_email: 'bob@example.com',
+        client_name: 'Bob',
         status: 'completed',
+        appointment_date: fourDaysAgo,
+        aftercare_day3_at: null,
+        aftercare_day14_at: null,
       },
-    });
+    ]);
 
     const sent: string[] = [];
     setAftercareDelivery(async (m) => {
       sent.push(`${m.stage}:${m.clientEmail}`);
     });
 
-    const count = await runAftercareSweep();
+    const count = await runAftercareSweep(db);
     expect(count).toBe(1);
     expect(sent).toEqual(['day3:bob@example.com']);
   });
 
   it('does not double-send the same stage', async () => {
-    const user = await prisma.user.create({
-      data: { email: 'c@d.e', passwordHash: 'x:y', bookingSlug: `t-${Date.now()}-2` },
-    });
-    const fourDaysAgo = new Date(Date.now() - 4 * DAY);
-    await prisma.booking.create({
-      data: {
-        userId: user.id,
-        clientName: 'Carol',
-        clientEmail: 'carol@example.com',
-        description: 'fine line tattoo',
-        preferredDate: fourDaysAgo,
-        appointmentDate: fourDaysAgo,
-        depositCents: 5000,
+    const fourDaysAgo = new Date(Date.now() - 4 * DAY).toISOString();
+    const { db } = createTestDb([
+      {
+        id: 1,
+        client_email: 'carol@example.com',
+        client_name: 'Carol',
         status: 'completed',
+        appointment_date: fourDaysAgo,
+        aftercare_day3_at: null,
+        aftercare_day14_at: null,
       },
-    });
+    ]);
 
     let calls = 0;
     setAftercareDelivery(async () => {
       calls++;
     });
-    await runAftercareSweep();
-    await runAftercareSweep();
+    await runAftercareSweep(db);
+    await runAftercareSweep(db);
     expect(calls).toBe(1);
   });
 
   it('sends day-14 reminder for bookings older than 14 days', async () => {
-    const user = await prisma.user.create({
-      data: { email: 'e@f.g', passwordHash: 'x:y', bookingSlug: `t-${Date.now()}-3` },
-    });
-    const fifteenDaysAgo = new Date(Date.now() - 15 * DAY);
-    await prisma.booking.create({
-      data: {
-        userId: user.id,
-        clientName: 'Dee',
-        clientEmail: 'dee@example.com',
-        description: 'sleeve',
-        preferredDate: fifteenDaysAgo,
-        appointmentDate: fifteenDaysAgo,
-        depositCents: 5000,
+    const fifteenDaysAgo = new Date(Date.now() - 15 * DAY).toISOString();
+    const { db } = createTestDb([
+      {
+        id: 1,
+        client_email: 'dee@example.com',
+        client_name: 'Dee',
         status: 'completed',
-        aftercareDay3At: new Date(Date.now() - 12 * DAY),
+        appointment_date: fifteenDaysAgo,
+        aftercare_day3_at: new Date(Date.now() - 12 * DAY).toISOString(),
+        aftercare_day14_at: null,
       },
-    });
+    ]);
 
     const sent: string[] = [];
     setAftercareDelivery(async (m) => {
       sent.push(m.stage);
     });
-    await runAftercareSweep();
+    await runAftercareSweep(db);
     expect(sent).toEqual(['day14']);
   });
 
   it('does not send anything for fresh bookings', async () => {
-    const user = await prisma.user.create({
-      data: { email: 'h@i.j', passwordHash: 'x:y', bookingSlug: `t-${Date.now()}-4` },
-    });
-    await prisma.booking.create({
-      data: {
-        userId: user.id,
-        clientName: 'Eve',
-        clientEmail: 'eve@example.com',
-        description: 'tiny dot',
-        preferredDate: new Date(),
-        appointmentDate: new Date(),
-        depositCents: 5000,
+    const { db } = createTestDb([
+      {
+        id: 1,
+        client_email: 'eve@example.com',
+        client_name: 'Eve',
         status: 'completed',
+        appointment_date: new Date().toISOString(),
+        aftercare_day3_at: null,
+        aftercare_day14_at: null,
       },
-    });
+    ]);
+
     let called = 0;
     setAftercareDelivery(async () => {
       called++;
     });
-    const count = await runAftercareSweep();
+    const count = await runAftercareSweep(db);
     expect(count).toBe(0);
     expect(called).toBe(0);
   });

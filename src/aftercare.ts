@@ -1,16 +1,11 @@
-// Aftercare scheduling. The "aftercare" feature in this MVP is a database-driven
-// scheduled job: every minute we look for completed bookings whose 3-day or 14-day
-// aftercare timestamps are due and we mark them sent. In production this would
-// also fire an email or SMS — wired through any of: Resend, Postmark, Twilio.
+// Aftercare scheduling — Cloudflare Workers version.
 //
-// The job is intentionally idempotent: it sets `aftercareDay3At` / `aftercareDay14At`
-// to "now" so the next pass skips them. Replace `deliverAftercare()` with your
-// real notification provider.
-
-import { prisma } from './db.ts';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-let timer: NodeJS.Timeout | null = null;
+// The sweep runs via Cron Trigger (every minute). It finds completed/consented
+// bookings whose 3-day or 14-day aftercare is due, delivers the reminder,
+// and marks it sent. Fully idempotent.
+//
+// The delivery function is injectable via setAftercareDelivery() — in production
+// plug in Resend/Postmark/etc. via fetch().
 
 export type AftercareDelivery = {
   bookingId: number;
@@ -19,9 +14,8 @@ export type AftercareDelivery = {
   stage: 'day3' | 'day14';
 };
 
-// Override this in tests or to inject a real notification provider.
+// Override this to inject a real notification provider.
 export let deliverAftercare: (msg: AftercareDelivery) => Promise<void> = async (msg) => {
-  // eslint-disable-next-line no-console
   console.log(`[aftercare] would send ${msg.stage} reminder to ${msg.clientEmail} (booking ${msg.bookingId})`);
 };
 
@@ -29,69 +23,70 @@ export function setAftercareDelivery(fn: (msg: AftercareDelivery) => Promise<voi
   deliverAftercare = fn;
 }
 
-export async function runAftercareSweep(now = new Date()): Promise<number> {
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type BookingRow = {
+  id: number;
+  client_email: string;
+  client_name: string;
+};
+
+export async function runAftercareSweep(db: D1Database, now = new Date()): Promise<number> {
   let sent = 0;
 
-  const day3Due = await prisma.booking.findMany({
-    where: {
-      status: { in: ['completed', 'consented'] },
-      appointmentDate: { lte: new Date(now.getTime() - 3 * DAY_MS) },
-      aftercareDay3At: null,
-    },
-  });
+  // Day-3 reminders
+  const day3Cutoff = new Date(now.getTime() - 3 * DAY_MS).toISOString();
+  const day3Due = await db
+    .prepare(
+      `SELECT id, client_email, client_name FROM bookings
+       WHERE status IN ('completed','consented')
+         AND appointment_date IS NOT NULL
+         AND appointment_date <= ?
+         AND aftercare_day3_at IS NULL`,
+    )
+    .bind(day3Cutoff)
+    .all<BookingRow>();
 
-  for (const b of day3Due) {
+  for (const b of day3Due.results) {
     await deliverAftercare({
       bookingId: b.id,
-      clientEmail: b.clientEmail,
-      clientName: b.clientName,
+      clientEmail: b.client_email,
+      clientName: b.client_name,
       stage: 'day3',
     });
-    await prisma.booking.update({
-      where: { id: b.id },
-      data: { aftercareDay3At: now },
-    });
+    await db
+      .prepare('UPDATE bookings SET aftercare_day3_at = ? WHERE id = ?')
+      .bind(now.toISOString(), b.id)
+      .run();
     sent++;
   }
 
-  const day14Due = await prisma.booking.findMany({
-    where: {
-      status: { in: ['completed', 'consented'] },
-      appointmentDate: { lte: new Date(now.getTime() - 14 * DAY_MS) },
-      aftercareDay14At: null,
-    },
-  });
+  // Day-14 reminders
+  const day14Cutoff = new Date(now.getTime() - 14 * DAY_MS).toISOString();
+  const day14Due = await db
+    .prepare(
+      `SELECT id, client_email, client_name FROM bookings
+       WHERE status IN ('completed','consented')
+         AND appointment_date IS NOT NULL
+         AND appointment_date <= ?
+         AND aftercare_day14_at IS NULL`,
+    )
+    .bind(day14Cutoff)
+    .all<BookingRow>();
 
-  for (const b of day14Due) {
+  for (const b of day14Due.results) {
     await deliverAftercare({
       bookingId: b.id,
-      clientEmail: b.clientEmail,
-      clientName: b.clientName,
+      clientEmail: b.client_email,
+      clientName: b.client_name,
       stage: 'day14',
     });
-    await prisma.booking.update({
-      where: { id: b.id },
-      data: { aftercareDay14At: now },
-    });
+    await db
+      .prepare('UPDATE bookings SET aftercare_day14_at = ? WHERE id = ?')
+      .bind(now.toISOString(), b.id)
+      .run();
     sent++;
   }
 
   return sent;
-}
-
-export function startAftercareScheduler(intervalMs = 60_000): void {
-  if (timer) return;
-  timer = setInterval(() => {
-    runAftercareSweep().catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error('[aftercare] sweep failed:', err);
-    });
-  }, intervalMs);
-}
-
-export function stopAftercareScheduler(): void {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-  }
 }

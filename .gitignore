@@ -1,5 +1,8 @@
 node_modules
 dist
+.wrangler
+.dev.vars
+.mf
 *.db
 *.db-journal
 .env

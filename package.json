@@ -1,31 +1,27 @@
 {
   "name": "tattoo-studio-os",
-  "version": "0.1.0",
-  "description": "Booking + deposit + consent + automated aftercare for tattoo artists. Stop running your studio out of Instagram DMs.",
+  "version": "0.2.0",
+  "description": "Booking + deposit + consent + automated aftercare for tattoo artists. Runs on Cloudflare Workers + D1.",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "node --import tsx src/server.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "build": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:migrate": "wrangler d1 migrations apply tattoo-studio --local",
+    "db:migrate:prod": "wrangler d1 migrations apply tattoo-studio --remote"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.7",
-    "@prisma/client": "^5.22.0",
     "hono": "^4.6.12",
     "stripe": "^17.4.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "prisma": "^5.22.0",
-    "tsx": "^4.19.2",
+    "@cloudflare/workers-types": "^4.20241205.0",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "wrangler": "^3.93.0"
   }
 }

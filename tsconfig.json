@@ -11,7 +11,7 @@
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "types": ["node"]
+    "types": ["@cloudflare/workers-types"]
   },
   "include": ["src/**/*", "tests/**/*"]
 }

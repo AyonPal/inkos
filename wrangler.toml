@@ -1,0 +1,19 @@
+name = "tattoo-studio-os"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Cron triggers: aftercare sweep every minute, session cleanup every hour
+[triggers]
+crons = ["*/1 * * * *", "0 * * * *"]
+
+# Cloudflare D1 database
+[[d1_databases]]
+binding = "DB"
+database_name = "tattoo-studio"
+database_id = "local"                    # replace after `wrangler d1 create tattoo-studio`
+
+[vars]
+APP_URL = "http://localhost:8787"
+DEFAULT_DEPOSIT_CENTS = "5000"
+STRIPE_SECRET_KEY = ""
+STRIPE_WEBHOOK_SECRET = ""
