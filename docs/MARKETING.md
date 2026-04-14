@@ -219,3 +219,138 @@ Note: Churn is expected to be low for this product category. Tattoo artists who 
 | **Total months 1–3** | ~**$250–$550** |
 
 The largest non-obvious cost is Instagram content creation time — this is the primary channel and requires 3–5 posts per week. If you're not a designer, Canva Pro ($13/mo) is essential. A convention investment in month 3 is optional but can compress months of growth into a single weekend.
+
+---
+
+# ADDENDUM — Competitive Analysis & Reddit Validation (2026-04-13)
+
+## 9. Competitive Landscape (researched 2026-04-13)
+
+**Market:** $123.5M (2024) → $250M by 2033 | 8.5% CAGR | North America dominant
+
+| Player | Pricing | Strengths | Weaknesses |
+|---|---|---|---|
+| **Vagaro** (#1, 221K pros) | $23.99/mo + $10/extra artist | Full POS, marketing, marketplace discovery, deposits | Salon-first, not tattoo-first — requires heavy customization. "Nickel and dime" complaints from artists ($30 quickly becomes $80). |
+| **TattooGenda** | Free (solo) / $16–$45/mo | Built by tattoo artists, EU ink compliance, aftercare automation | Limited POS, weak reporting |
+| **REV23** | Unknown | Tattoo & piercing specific, compliance tracking | Outdated UX, limited info available |
+| **Booksy** | $29.99/mo | Marketing tools, 24/7 booking | Generic beauty platform |
+| **Mangomint** | Premium | Clean UX, multi-artist calendars | Not tattoo-specific |
+| **InkDesk** | Unknown | Tattoo-specific, studio version available | Newer, smaller user base |
+| **Porter** | $35/mo (Artist Essentials) | Booking + payments + POS + payroll + analytics | Higher price, more complexity |
+| **Venue.ink** | Unknown | Booking + consent forms + scheduling | Less established |
+| **Acuity (Squarespace)** | $16–$49/mo | Clean booking UX, Acuity founder confirmed tattoo studios use it | Not tattoo-specific, no consent forms, no aftercare |
+
+### User pain points from real Reddit threads (validated 2026-04-13)
+
+- Software feels **salon-first, not tattoo-first** — constant renaming/customization
+- **Vagaro "nickel and dime"** — $30/mo quickly becomes $80/mo with add-ons (confirmed by artist in r/TattooArtists thread)
+- **Walk-in management** is clunky mid-session
+- **Reporting accuracy** is weak across most tools
+- **Desktop/mobile sync** issues
+- **Admin time burden** — too much context-switching
+- Many artists still use **physical books, iPhone calendar, or Square free version** — not because it's better, but because booking apps feel overengineered
+
+### Our differentiation
+
+InkOS is the only tool that bundles booking + Stripe deposit + digital consent form + automated aftercare in one flat-price flow ($19/mo). No salon baggage. No nickel-and-dime upgrades. One link for the Instagram bio.
+
+---
+
+## 10. Reddit Thread Research (2026-04-13)
+
+### Validated threads where tattoo artists discuss booking pain
+
+**Thread: "What scheduling tool do most of you use?" — r/TattooArtists**
+- URL: https://www.reddit.com/r/TattooArtists/comments/1n8h9l7/what_scheduling_tool_do_most_of_you_use/
+- Age: 7 months | Comments: 50+
+- **Key findings from actual comments:**
+  - Artists using: Vagaro, Square (free), Acuity, InkDesk, Venue.ink, GlossGenius, Keep The Fees, physical books, iPhone calendar
+  - "Vagaro — they'll nickel and dime you for every little thing. $30/mo can quickly become $80/mo"
+  - "I have a physical book. Works great" — many artists actively resist software
+  - "I need my work life to stay at the shop" — some artists don't want always-on digital tools
+  - InkDesk founder and Acuity founder both commented — **self-promotion by tool founders is accepted in this thread**
+  - Square free version popular with solo artists — price sensitivity is real
+- **Thread tone:** Casual tool swap. Founders welcome. No hostility to recommendations.
+- **Subreddit rules:** Community-focused, tool discussion allowed, founders have commented freely.
+
+**Other validated threads (r/TattooArtists):**
+
+| Thread | Age | Comments | Relevance |
+|---|---|---|---|
+| [What tattoo software do most of you use?](https://www.reddit.com/r/TattooArtists/comments/1njig5s/what_tattoo_software_do_most_of_you_use/) | 6 months | 40+ | Direct software recommendation thread |
+| [Website/booking platforms?](https://www.reddit.com/r/TattooArtists/comments/1o95hyx/websitebooking_platforms/) | 5 months | 40+ | Asking for booking platform recs |
+| [Booking Platform](https://www.reddit.com/r/TattooArtists/comments/1p3ve4d/booking_platform/) | 4 months | 10+ | Direct ask for booking platform |
+| [Booking apps?](https://www.reddit.com/r/TattooArtists/comments/1fwhx59/booking_apps/) | 1 year | 40+ | Tool recommendations |
+| [What is your deposit system like?](https://www.reddit.com/r/TattooArtists/comments/17uvj88/what_is_your_deposit_system_like/) | 2 years | 30+ | Deposit workflow discussion |
+
+**Threads to AVOID (r/tattoo — client-side):**
+
+| Thread | Why skip |
+|---|---|
+| [Deposits (3 weeks, 80+ comments)](https://www.reddit.com/r/tattoo/comments/1s05hqx/deposits/) | Client rant about deposit not counting toward tattoo price. Angry consumer tone. Dropping a tool link = downvotes + ban. |
+| [How to book tattoo appointment without instagram (10 months)](https://www.reddit.com/r/tattoo/comments/1l417ji/how_to_book_tattoo_appointment_without_instagram/) | Client perspective, not artist workflow |
+| [Is my tattoo artist dodging me? (6 months)](https://www.reddit.com/r/tattoo/comments/1o2p29v/is_my_tattoo_artist_dodging_me/) | Client frustration, wrong audience |
+
+**r/tattoo rules:** No advertising. No self-promotion. Artists need mod verification. Very strict — do NOT post tool links here.
+
+**r/TattooArtists rules:** Community-focused but tool discussion is normal. Founders commenting with their tools is accepted (InkDesk and Acuity founders both did it).
+
+---
+
+## 11. Ready-to-Post Comment (r/TattooArtists — scheduling tool thread)
+
+**Target thread:** https://www.reddit.com/r/TattooArtists/comments/1n8h9l7/what_scheduling_tool_do_most_of_you_use/
+
+**Comment:**
+
+```
+Late to this but I've been building a booking tool specifically 
+for tattoo artists — not a salon app rebranded. One link for your 
+IG bio, client picks time + pays deposit via Stripe + signs consent 
+form digitally in one flow. Aftercare reminders at day 3 and 14 
+fire automatically.
+
+Not fully live yet (collecting early access signups): [LINK]
+
+Seeing a lot of Vagaro mentions here — curious what people think 
+about the "nickel and dime" issue someone mentioned. That's 
+exactly what I'm trying to avoid with a flat $19/mo price.
+```
+
+**Why this comment works:**
+- Thread already has founders self-promoting (InkDesk, Acuity) — fits the tone
+- References another comment ("nickel and dime") showing the thread was actually read
+- Asks a question to invite replies, not a dead-end pitch
+- $19/mo flat price directly addresses a real pain point from the thread
+- Acknowledges it's "not fully live yet" — honest, not overselling
+
+**Risk assessment:** LOW. Tool recommendation threads in r/TattooArtists have a track record of accepting founder comments. Multiple founders have done this in this exact thread.
+
+---
+
+## 12. My Assessment (2026-04-13)
+
+**Competition is real but beatable.** Vagaro has 221K users but artists hate the salon-first UX and price creep. InkDesk and Porter are tattoo-specific but newer and less known. Many artists still use physical books or iPhone calendars — they haven't been convinced by any tool yet.
+
+**The Instagram-DM signal is confirmed.** Multiple threads confirm artists manage bookings through DMs, use Venmo/CashApp for deposits, and print paper consent forms. This is not a hypothetical pain — it's the dominant workflow.
+
+**Price sensitivity is higher than expected.** Many artists use Square free tier or Google Calendar. $19/mo is at the right threshold — cheaper than Vagaro ($24+), cheaper than Porter ($35), and far simpler. But there's a real segment of artists who won't pay for any software. Target the ones who already use Vagaro/Booksy and are frustrated, not the ones on physical books.
+
+**Distribution should be r/TattooArtists first, Instagram second.** r/tattoo is for clients and too strict on promo. r/TattooArtists is where artists discuss business tools openly. Instagram DM outreach to artists complaining about no-shows is the second channel.
+
+---
+
+## 13. Domain Plan (buy only after validation)
+
+**Brand name:** InkOS
+
+| Priority | Domain | Est. cost | Notes |
+|---|---|---|---|
+| 1 | `inkos.co` | ~$12/yr | Best pick — same brand, clean, `.co` is startup standard |
+| 2 | `inkos.app` | ~$15/yr | Good alternative, `.app` fits a tool |
+| 3 | `inkos.io` | ~$30/yr | Pricier but credible |
+| 4 | `getinkos.com` | ~$12/yr | .com with prefix — fallback |
+
+**Why not inkos.com:** Taken by INKOS GmbH, a German electronics company. No conflict (different industry) but domain is unavailable.
+
+**When to buy:** After 10+ waitlist signups from Reddit. Not before.

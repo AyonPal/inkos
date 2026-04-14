@@ -160,10 +160,18 @@
       nav { padding: 1rem 1.5rem; }
       .nav-links { display: none; }
       .hero { grid-template-columns: 1fr; gap: 2.5rem; padding: 3rem 1.5rem; min-height: auto; }
+      .hero h1 { font-size: 2rem; }
       .phone-wrap { display: flex; justify-content: center; }
-      .stats-inner { gap: 1.5rem; }
+      .phone { width: 220px; }
+      .stats-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
       .stat-divider { display: none; }
-      .section { padding: 3.5rem 1.5rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; gap: 2rem; }
+      .pricing-wrap { grid-template-columns: 1fr; }
+      .section { padding: 3rem 1.5rem; }
+      .faq-list { margin-top: 2rem; }
+      #waitlist form { flex-direction: column; }
+      #waitlist form input, #waitlist form button { width: 100%; }
       footer { flex-direction: column; align-items: flex-start; }
     }
   </style>
@@ -178,7 +186,7 @@
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
   </div>
-  <a href="#pricing" class="btn btn-primary">Get Started</a>
+  <a href="#waitlist" class="btn btn-primary">Join Waitlist</a>
 </nav>
 
 <!-- HERO -->
@@ -188,7 +196,7 @@
     <h1>Run your studio,<em>not your DMs.</em></h1>
     <p>One booking link replaces Instagram DMs, Venmo requests, paper consent forms, and forgotten aftercare follow-ups.</p>
     <div class="hero-actions">
-      <a href="#pricing" class="btn btn-primary btn-lg">Start your free trial</a>
+      <a href="#waitlist" class="btn btn-primary btn-lg">Join the waitlist</a>
       <a href="#how" class="btn btn-ghost btn-lg">See how it works</a>
     </div>
   </div>
@@ -223,13 +231,13 @@
 <!-- STATS -->
 <div class="stats">
   <div class="stats-inner">
-    <div class="stat"><div class="stat-num">800+</div><div class="stat-label">Artists using InkOS</div></div>
-    <div class="stat-divider"></div>
     <div class="stat"><div class="stat-num">0 DMs</div><div class="stat-label">Needed to book a client</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><div class="stat-num">$0 no-shows</div><div class="stat-label">With deposit-first booking</div></div>
     <div class="stat-divider"></div>
     <div class="stat"><div class="stat-num">Day 3 & 14</div><div class="stat-label">Automated aftercare follow-ups</div></div>
     <div class="stat-divider"></div>
-    <div class="stat"><div class="stat-num">$0 no-shows</div><div class="stat-label">With deposit-first booking</div></div>
+    <div class="stat"><div class="stat-num">$19/mo</div><div class="stat-label">Solo artist plan</div></div>
   </div>
 </div>
 
@@ -287,7 +295,7 @@
   </section>
 </div>
 
-<!-- PRICING -->
+<!-- PRICING PREVIEW -->
 <section class="section" id="pricing">
   <div style="text-align:center">
     <div class="section-label">Pricing</div>
@@ -306,7 +314,7 @@
         <li>SMS + email reminders</li>
         <li>Up to 60 bookings/month</li>
       </ul>
-      <a href="#" class="btn btn-ghost" style="width:100%; text-align:center; display:block">Start free trial</a>
+      <a href="#waitlist" class="btn btn-ghost" style="width:100%; text-align:center; display:block">Join waitlist</a>
     </div>
     <div class="plan featured">
       <div class="plan-badge">Studio</div>
@@ -321,8 +329,23 @@
         <li>Deposit splits per artist</li>
         <li>Priority support</li>
       </ul>
-      <a href="#" class="btn btn-primary" style="width:100%; text-align:center; display:block">Start free trial</a>
+      <a href="#waitlist" class="btn btn-primary" style="width:100%; text-align:center; display:block">Join waitlist</a>
     </div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section class="section" id="waitlist" style="padding-bottom: 2rem;">
+  <div style="text-align:center; max-width: 540px; margin: 0 auto;">
+    <div class="section-label">Early Access</div>
+    <h2 class="section-title">Get early access + founding member pricing</h2>
+    <p class="section-sub" style="margin: 0 auto 2rem;">We're launching soon. Drop your email and we'll notify you first. Early signups get founding member pricing.</p>
+    <form id="waitlist-form" style="display: flex; gap: 0.6rem; max-width: 440px; margin: 0 auto;" onsubmit="return handleWaitlist(this)">
+      <input type="email" name="email" placeholder="you@example.com" required style="flex:1; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.95rem; outline: none; font-family: var(--font);" />
+      <button type="submit" class="btn btn-primary btn-lg" style="white-space: nowrap;">Join Waitlist</button>
+    </form>
+    <p id="waitlist-msg" style="margin-top: 1rem; font-size: 0.85rem; color: var(--accent); display: none;"></p>
+    <p style="margin-top: 1rem; font-size: 0.78rem; color: var(--muted);">No spam. Just a launch notification.</p>
   </div>
 </section>
 
@@ -350,18 +373,11 @@
       <p>Absolutely. Default messages are ready to go on day 1, but you can edit them per session type. Flash tattoo vs. sleeve will have different aftercare needs.</p>
     </details>
     <details>
-      <summary>Is there a free trial?</summary>
-      <p>Yes — 14 days free, no credit card required. Take it for a full spin before deciding. If it doesn't replace your DM chaos, just cancel.</p>
+      <summary>When does InkOS launch?</summary>
+      <p>We're in the final build phase. Join the waitlist and you'll be the first to know. Early signups get founding member pricing when we launch.</p>
     </details>
   </div>
 </section>
-
-<!-- FOOTER CTA -->
-<div class="footer-cta">
-  <h2>Ready to close your DMs?</h2>
-  <p>Join 800+ artists who replaced the chaos with one clean booking link.</p>
-  <a href="#" class="btn btn-primary btn-lg">Start your free trial</a>
-</div>
 
 <!-- FOOTER -->
 <footer>
@@ -375,5 +391,36 @@
   <span class="footer-copy">© 2025 InkOS</span>
 </footer>
 
+<script>
+var WAITLIST_API = 'http://localhost:9009';
+function handleWaitlist(form) {
+  var email = form.email.value;
+  var btn = form.querySelector('button');
+  btn.textContent = 'Joining...';
+  btn.disabled = true;
+  fetch(WAITLIST_API + '/join', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, product: 'inkos' })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    form.style.display = 'none';
+    var msg = document.getElementById('waitlist-msg');
+    if (data.message === 'already_joined') {
+      msg.textContent = "You're already on the list! We'll email you at launch.";
+    } else {
+      msg.textContent = "You're in! We'll notify you at launch. Early access + founding member pricing.";
+    }
+    msg.style.display = 'block';
+  })
+  .catch(function() {
+    btn.textContent = 'Join Waitlist';
+    btn.disabled = false;
+    alert('Something went wrong. Please try again.');
+  });
+  return false;
+}
+</script>
 </body>
 </html>
