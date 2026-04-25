@@ -15,5 +15,4 @@ database_id = "local"                    # replace after `wrangler d1 create tat
 [vars]
 APP_URL = "http://localhost:8787"
 DEFAULT_DEPOSIT_CENTS = "5000"
-STRIPE_SECRET_KEY = ""
-STRIPE_WEBHOOK_SECRET = ""
+# Secrets (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET) are set via `wrangler secret put`, not [vars].
